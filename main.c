@@ -85,11 +85,12 @@ int main(void) {
   int fila_lim = 0, fila_atual = 0, carro_atendido = 0;
   int opcao = 0, tipo = 0;
   float gas_preco = 0, gas_vendido = 0, gas_abastecer, gas_tank = 200, banco;
-
+  FILE *fp = fopen("registro.txt", "w");
   struct TCarro *carro;
   struct TCarro *atendido;
 
   Inicio(&gas_preco, &fila_lim);
+
   atendido = (struct TCarro *)malloc(1 * sizeof(struct TCarro));
   carro = (struct TCarro *)malloc(fila_lim * sizeof(struct TCarro));
   if (carro == NULL) {
@@ -111,14 +112,13 @@ int main(void) {
       } else {
         flush_in();
 
-        printf("digite o nome/modelo do carro:");
+        printf("digite o nome do carro:");
         fgets(carro[fila_atual].nome, 31, stdin);
         carro[fila_atual].nome[strcspn(carro[fila_atual].nome, "\n")] = 0;
 
         printf("digite a marca do carro:");
-                fgets(carro[fila_atual].marca, 31, stdin);
+        fgets(carro[fila_atual].marca, 31, stdin);
         carro[fila_atual].marca[strcspn(carro[fila_atual].marca, "\n")] = 0;
-
 
         printf("capacidade do tanque do carro:");
         scanf("%f", &carro[fila_atual].tank_max);
@@ -151,13 +151,13 @@ int main(void) {
 
     case 2: // abastecer carro
     {
-      if (fila_atual > 0) { // verifica se afila existe
+      if (fila_atual > 0 || gas_tank <= 0) { // verifica se afila existe
 
         tipo = 2; // muda tipo do menu
         Menu(&opcao, &tipo);
-
+      
         switch (opcao) {
-
+    
         case 1: {
           printf("o cliente pode abastecer %s%.2fL%s de gasolina", C_GREEN,
                  carro[0].tank_max - carro[0].tank_atual, C_RESET);
@@ -166,9 +166,20 @@ int main(void) {
           scanf("%f", &gas_abastecer);
 
           while (gas_abastecer > carro[0].tank_max - carro[0].tank_atual ||
-                 gas_abastecer <= 0) {
-            
-            printf("\nocorreu um erro, por favor "
+                 gas_abastecer <= 0 || gas_abastecer > gas_tank) {
+            if (gas_abastecer > carro[0].tank_max - carro[0].tank_atual) {
+              printf("%sERRO!% a quantidade que você deseja abastecer excede o "
+                     "tanque do carro\n",
+                     C_RED, C_RESET);
+            } else if (gas_abastecer <= 0) {
+              printf("%sERRO!% o valor de abastecimento tem que ser positivo\n",
+                     C_RED, C_RESET);
+            } else if (gas_abastecer > gas_tank) {
+              printf("%sERRO!% a quantidade de gasolina excede o disponível no "
+                     "tanque do posto\n",
+                     C_RED, C_RESET);
+            }
+            printf("\n por favor "
                    "redigite:");
             scanf("%f", &gas_abastecer);
           }
@@ -185,12 +196,13 @@ int main(void) {
           break;
         } // abastecimento total
         }
+
         gas_vendido = gas_vendido + gas_abastecer;
         gas_tank = gas_tank - gas_abastecer;
         fila_atual = fila_atual - 1;
-        atendido[carro_atendido] = carro[0];        
+        atendido[carro_atendido] = carro[0];
         carro_atendido = carro_atendido + 1;
-        
+
         atendido = (struct TCarro *)realloc(
             atendido, (carro_atendido + 1) * sizeof(struct TCarro));
 
@@ -198,9 +210,14 @@ int main(void) {
 
         printf("%sCarro atendido%s\ngasolina restante no tanque:%.2f", C_GREEN,
                C_RESET, gas_tank);
-      } else { // fila não existe
+        
+      } else { // ERROS
+        if(fila_atual > 0){
         printf("%sERRO!%s a fila está vazia", C_RED, C_RESET);
+      }else{
+          printf("%sERRO!%s o tanque está vazio", C_RED, C_RESET);
       }
+        }
       tipo = 0;
       break;
     }
@@ -249,9 +266,19 @@ int main(void) {
                  C_GREEN, gas_tank, C_RESET);
           break;
         case 5: // gerar arquivos para impressão
-          printf("quantidade de litros vendida:%s%.2f%s\nvalor arecadado das "
+
+          fprintf(fp,
+                  "Quantidade de gasolina vendida: %.2f litros\nQuantidade de "
+                  "carros tendidos: %d carro(s)\nValor total arrecadado com as "
+                  "vendas: R$ %.2f\n",
+                  gas_vendido, carro_atendido, banco);
+          fclose(fp);
+
+          printf("quantidade de litros vendida:%s%.2f%s\ncarros atendidos: "
+                 "%s%d%svalor arecadado das "
                  "vendas:%s%.2f%s",
-                 C_GREEN, gas_vendido, C_RESET, C_GREEN, banco, C_RESET);
+                 C_GREEN, gas_vendido, C_RESET, C_GREEN, carro_atendido,
+                 C_RESET, C_GREEN, banco, C_RESET);
           break;
         case 6:
 
