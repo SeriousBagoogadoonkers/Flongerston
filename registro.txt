@@ -1,0 +1,3 @@
+Quantidade de gasolina vendida: 108.00 litros
+Quantidade de carros tendidos: 3 carro(s)
+Valor total arrecadado com as vendas: R$ 540.00
